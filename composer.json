@@ -1,0 +1,19 @@
+{
+    "name": "oscurlo/mvc",
+    "autoload": {
+        "psr-4": {
+            "Oscurlo\\Mvc\\": "src/",
+            "Model\\": "models/",
+            "Controller\\": "controllers/",
+            "View\\": "views/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Esteban Serna Palacios"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.5"
+    }
+}
