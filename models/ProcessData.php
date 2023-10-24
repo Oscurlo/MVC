@@ -5,7 +5,7 @@ namespace Model;
 use Exception;
 use InvalidArgumentException;
 
-use function PHPSTORM_META\type;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class ProcessData
 {
@@ -19,6 +19,9 @@ class ProcessData
     protected $conn;
 
     const STRING_SEPARATOR = "|/|";
+
+    public $OPTIMIZE_IMAGES = false;
+    public $DEFAULT_QUALITY = 90;
 
     public function __construct()
     {
@@ -139,10 +142,43 @@ class ProcessData
             }, $value)) : str_replace(BASE_FOLDER, BASE_SERVER, $value);
 
             $this->prepareData[":{$name}"] = $value;
+
+            # Optimización de imagenes
+            if ($this->OPTIMIZE_IMAGES === true) {
+                $path = str_replace(BASE_SERVER, BASE_FOLDER, explode(self::STRING_SEPARATOR, $value));
+                self::optimizeImages($path, $this->DEFAULT_QUALITY);
+            }
         }
 
         return $data;
     }
+
+    public function optimizeImages(String|array $format, $quality): void
+    {
+        $imagePaths = strtoupper(gettype($format)) == "STRING" ? glob($format) : $format;
+
+        $validExt = ["jpg", "png", "gif", "tif", "bmp", "ico", "psd", "webp"];
+
+        foreach ($imagePaths as $imagePath) {
+            if (file_exists($imagePath)) {
+
+                $info = pathinfo($imagePath);
+
+                if (isset($info['extension']) && in_array(strtolower($info['extension']), $validExt)) self::encodeImage($imagePath, $quality, $info["extension"]);
+            }
+        }
+    }
+
+    static function encodeImage($img, $quality, $outputFormat = "data-url"): void
+    {
+        Image::make($img)->encode($outputFormat, $quality)->save($img);
+    }
+
+    static function resizeImage($img, $newWidth, $newHeight): void
+    {
+        Image::make($img)->resize($newWidth, $newHeight)->save($img);
+    }
+
 
     public function __destruct()
     {
