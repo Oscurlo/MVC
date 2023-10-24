@@ -179,6 +179,10 @@ class ProcessData
         Image::make($img)->resize($newWidth, $newHeight)->save($img);
     }
 
+    static function rotateImage($img, $angle): void
+    {
+        Image::make($img)->rotate($angle)->save($img);
+    }
 
     public function __destruct()
     {
