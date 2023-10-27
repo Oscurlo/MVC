@@ -1,2 +1,7 @@
 # Configuracion De Mi Editor
 .vscode
+# Componentes de Composer
+composer.lock
+vendor/
+# Carpeta de archivos
+file/
