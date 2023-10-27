@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Conexión a la básica a la base de datos,
+ * Conexión básica a la base de datos,
  * de hecho utilicé los mismos parámetros que requiere PDO para establecer la conexión.
  * 
  * Si algo me disculpo por el spanglish,
@@ -77,9 +77,9 @@ class DB
     /**
      * Realmente no he usado esto de "option" de hecho creo que no se para qué sirve :c, pero lo pongo por si acaso igual ;)
      */
-    public function getOption(): String
+    public function getOption(): array|null
     {
-        return $this->password;
+        return $this->option;
     }
     public function setOption(array|null $op): void
     {
