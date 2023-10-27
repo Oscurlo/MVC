@@ -19,6 +19,7 @@ class Route
 
         $this->page = self::getURI();
         $this->conn = new DB;
+        $this->conn->connect();
     }
 
     public function getPage()
@@ -33,7 +34,8 @@ class Route
 
     static function getURI(): String
     {
-        $ROUTE = $_GET["route"] ?? "default/";
+        // $ROUTE = $_GET["route"] ?? "default/";
+        $ROUTE = $_GET["route"] ?? "index";
         $isIndex = (substr($ROUTE, -1) === "/" ? "index" : "");
         return "/" . $ROUTE . $isIndex;
     }
@@ -63,10 +65,10 @@ class Route
                 throw new Exception("Invalid folder path");
 
             $files = [
-                "FRONTEND" => $page,
-                "BACKEND" => $folder . "/backend.php",
-                "CSS" => $folder . "/style.css",
-                "JS" => $folder . "/frontend.js"
+                "FRONT" => $page,
+                "BACK" => $folder . "/backend.php",
+                "STYLE" => $folder . "/style.css",
+                "SCRIPT" => $folder . "/frontend.js"
             ];
 
             # creo la carpeta
@@ -75,10 +77,10 @@ class Route
             # creo los archivos
             foreach ($files as $key => $filename) if (!file_exists($filename)) {
                 echo <<<HTML
-                <pre class="m-0 p-0">
-                    new file created: {$filename}
-                </pre>
-            HTML;
+                    <pre class="m-0 p-0">
+                        new file created: {$filename}
+                    </pre>
+                HTML;
                 $openString = fopen($filename, "w");
                 fwrite($openString, self::templates($key));
                 fclose($openString);
@@ -98,10 +100,8 @@ class Route
             "ONSESSION" => [
                 "FRONT" => <<<'HTML'
                 <?php
+                # Includes your controller
 
-                use Model\Route;
-
-                $route = new Route;
                 ?>
                 <div class="content-header">
                     <div class="container-fluid">
@@ -111,7 +111,7 @@ class Route
                             </div>
                             <div class="col-sm-6">
                                 <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item active"><?= substr($route::getURI(), 1) ?></li>
+                                    <li class="breadcrumb-item active"><?= substr($this::getURI(), 1) ?></li>
                                 </ol>
                             </div>
                         </div>
@@ -130,15 +130,18 @@ class Route
                         </div>
                     </div>
                 </section>
-                <button class="btn btn-success"></button>
                 HTML,
                 "BACK" => <<<HTML
-                <?php 
+                <?php
+                # Includes your controller
+
                 /*-- {$date} --*/
                 include_once "{$FOLDER}/vendor/autoload.php";
                 include "{$FOLDER}/config.php";
                 HTML,
-                "STYLE" => "/*-- {$date} --*/",
+                "STYLE" => <<<CSS
+                /* {$date} */
+                CSS,
                 "SCRIPT" => <<<JS
                 // {$date}
 
@@ -148,14 +151,21 @@ class Route
                 JS
             ],
             "OFFSESSION" => [
-                "FRONT" => "<!-- {$date} -->",
+                "FRONT" => <<<HTML
+                <?php
+                # Includes your controller
+                HTML,
                 "BACK" => <<<HTML
-                <?php 
+                <?php
+                # Includes your controller
+
                 /*-- {$date} --*/
                 include_once "{$FOLDER}/vendor/autoload.php";
                 include "{$FOLDER}/config.php";
                 HTML,
-                "STYLE" => "/*\ {$date} *\/",
+                "STYLE" => <<<CSS
+                /* {$date} */
+                CSS,
                 "SCRIPT" => <<<JS
                 // {$date}
 
@@ -178,11 +188,11 @@ class Route
 
             if (file_exists($this->page)) {
                 $folder = self::string_slice($this->page, "/", 0, -1);
-                # connect to database
-                $this->conn->connect();
 
                 # content
-                echo "<div data-router>", include $this->page, "</div>";
+                echo "<div data-router>";
+                include $this->page;
+                echo "</div>";
 
                 # css and scripts.
                 echo "<LOAD-CSS style=\"display: none !important\">", json_encode(self::folder_to_server(glob($folder . "/*.css")), JSON_UNESCAPED_UNICODE), "</LOAD-CSS>";
@@ -193,9 +203,6 @@ class Route
         } catch (Exception $th) { // no se como puede llegar hasta aqui,pero mejor prevenir
             if ($this->array_folder_error["ERROR_500"] && file_exists($this->array_folder_error["ERROR_500"])) include $this->array_folder_error["ERROR_500"];
             else echo $route, "<br>", "<h1>", 500, "</h1>";
-        } finally {
-            # close connect to database
-            $this->conn->close();
         }
     }
 
@@ -228,5 +235,9 @@ class Route
             </script>
         </div>
         HTML;
+    }
+    public function __destruct()
+    {
+        $this->conn->close();
     }
 }
