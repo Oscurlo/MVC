@@ -57197,7 +57197,7 @@ NameTable.process = function (stream) {
   for (var _iterator = _createForOfIteratorHelperLoose(this.records), _step; !(_step = _iterator()).done;) {
     var record = _step.value;
     // find out what language this is for
-    var language = AppConfig::LANGUAGES[record.platformID][record.languageID];
+    var language = LANGUAGES[record.platformID][record.languageID];
 
     if (language == null && this.langTags != null && record.languageID >= 0x8000) {
       language = this.langTags[record.languageID - 0x8000].tag;
