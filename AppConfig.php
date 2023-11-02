@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Notas:
+ * 1. Constantes: Para definir las constantes tuve en cuenta algunos sistemas que tenía y tome como lo más relevante para definir cada una
+ * 2. Sesión: Para la sesión me pareció más conveniente agregarlo dentro de la clase para tener la sesión en los archivos donde lo importe
+ * 3. Errores: De igual forma como hice con la sesión lo declare aquí mismo para que se aplique donde se importe
+ * 4. Zona horaria: misma cantaleta que ya explique >:(
+ */
+
 namespace System\Config;
 
 /** 
