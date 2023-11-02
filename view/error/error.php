@@ -1,9 +1,11 @@
 <?php
 
+use System\Config\AppConfig;
+
 $Error = "Error: {$error->getMessage()}";
 
 $style = implode("", array_map(function ($herf) {
-    $href = BASE_SERVER . "/{$herf}";
+    $href = AppConfig::BASE_SERVER . "/{$herf}";
     return <<<HTML
         <link rel="stylesheet" href="{$href}">
     HTML;
@@ -12,7 +14,7 @@ $style = implode("", array_map(function ($herf) {
     "AdminLTE/dist/css/adminlte.min.css",
 ]));
 
-$home = BASE_SERVER;
+$home = AppConfig::BASE_SERVER;
 
 echo <<<HTML
 <!DOCTYPE html>

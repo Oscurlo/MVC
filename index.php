@@ -1,4 +1,8 @@
 <?php
+
+use System\Config\AppConfig;
+use System\Config\ReplaceMaster;
+
 // Manejo de errores
 set_error_handler(function ($severity, $message, $file, $line) {
     // Este error no está incluido en error_reporting
@@ -19,11 +23,9 @@ try {
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
     $dotenv->load();
 
-    include __DIR__ . "/config.php";
+    header("Content-type: text/html; charset=" . AppConfig::CHARSET);
 
-    header("Content-type: text/html; charset=" . CHARSET);
-
-    if (CACHE_CONTROL) {
+    if (AppConfig::CACHE_CONTROL) {
         $lastModified = filemtime(__FILE__);
         $etag = md5_file(__FILE__);
 
@@ -40,7 +42,7 @@ try {
         }
     }
 
-    include __DIR__ . "/template/" . VIEW_MODE . ".php";
+    include __DIR__ . "/template/" . AppConfig::VIEW_MODE . ".php";
 } catch (Exception $e) {
     // Manejo de excepciones generales
     echo "Excepción: {$e->getMessage()}";

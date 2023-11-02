@@ -68,7 +68,7 @@ session_start([
     "cookie_httponly" => true, // Hacer que las cookies de sesión sean accesibles solo a través del protocolo HTTP
 ]);
 
-// Ya que no puedo definir constantes en tiempo de compilación se me ocurrió mejor declararla afuera y asignarle el valor a la clase
+// Ya que no puedo definir constantes en tiempo de compilación se me ocurrió mejor declararla afuera y asignar el valor dentro de la clase
 // jaja estoy loco lalala
 define("VIEW_MODE", isset($_SESSION["usuario"]) ? "onSession" : "offSession");
 

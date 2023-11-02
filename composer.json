@@ -5,15 +5,19 @@
             "Oscurlo\\Mvc\\": "src/",
             "Model\\": "models/",
             "Controller\\": "controllers/",
-            "View\\": "views/"
+            "View\\": "views/",
+            "System\\Config\\": "./"
         }
     },
     "authors": [
         {
-            "name": "Esteban Serna Palacios"
+            "name": "Esteban Serna Palacios",
+            "role": "Dev jr",
+            "homepage": "https://github.com/OscurloOriginal/"
         }
     ],
     "require": {
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "^5.5",
+        "intervention/image": "^2.7"
     }
 }
