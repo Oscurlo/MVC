@@ -54,7 +54,7 @@ class Datatable extends ProcessData
             $order = self::order($columns, $request, $originalTable);
 
             # limit
-            $limit = self::limit($request, DATABASE["GESTOR"] ?? false); # De momento no está funcional del todo, ya que si le envió una conexión diferente al constructor fallaría "No lo he probado, pero lo intuyo"
+            $limit = self::limit($request); # De momento no está funcional del todo, ya que si le envió una conexión diferente al constructor fallaría "No lo he probado, pero lo intuyo"
 
             # query
             $query = trim(<<<SQL
@@ -150,13 +150,13 @@ class Datatable extends ProcessData
         ][$type] ?? "ORDER BY {$column} {$order}";
     }
 
-    private function limit($req, $g = null): String
+    private function limit($req): String
     {
         return [
             "MYSQL" => "LIMIT {$req["start"]}, {$req["length"]}",
             "SQLITE" => "LIMIT {$req["start"]} OFFSET {$req["length"]}", # No he trabajado mucho con sqlite no se si esta bien :(
             "SQLSRV" => "OFFSET {$req["start"]} ROWS FETCH NEXT {$req["length"]} ROWS ONLY"
-        ][$g] ?? "";
+        ][$this->conn->getGestor()] ?? "";
     }
 
     /**

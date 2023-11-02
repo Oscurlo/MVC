@@ -11,26 +11,36 @@
 
 namespace Model;
 
+use Error;
 use PDO;
 use Exception;
 use PDOException;
+use System\Config\AppConfig;
 
 class DB
 {
-    private $conn = null, $array_dsn, $params;
+    private $conn = null, $array_dsn, $params, $gestor;
     protected $dsn, $username, $password, $option;
+
+    const isValid = ["MYSQL", "SQLSRV", "SQLITE"];
 
     # construct
     public function __construct()
     {
-        $this->params = DATABASE;
+        $this->params = AppConfig::DATABASE;
+
+        $this->gestor = strtoupper($this->params["GESTOR"]);
+
+        if (!in_array($this->gestor, self::isValid))
+            throw new Error("Gestor no válido para establecer la conexión: {$this->gestor}");
+
         $this->array_dsn = [
             "MYSQL" => "mysql:host={$this->params["HOSTNAME"]};dbname={$this->params["DATABASE"]}" . ($this->params["PORT"] ? ";port={$this->params["PORT"]}" : ""),
             "SQLSRV" => "sqlsrv:Server={$this->params["HOSTNAME"]};Database={$this->params["DATABASE"]}",
             "SQLITE" => "sqlite:{$this->params["FILE"]}"
         ];
 
-        $this->dsn = $this->array_dsn[$this->params["GESTOR"]] ?? false;
+        $this->dsn = $this->array_dsn[$this->gestor] ?? false;
         $this->username = $this->params["USERNAME"];
         $this->password = $this->params["PASSWORD"];
         $this->option = null;
@@ -38,6 +48,16 @@ class DB
 
     # Getters and Setters
     // -------------------------------------------------------
+    public function getGestor(): String
+    {
+        return $this->gestor;
+    }
+    public function setGestor(string $gestor): void
+    {
+        if (!in_array($this->gestor, self::isValid))
+            throw new Error("Gestor no válido para establecer la conexión: {$this->gestor}");
+        $this->gestor = $gestor;
+    }
     public function getDSN(): String
     {
         return $this->dsn;

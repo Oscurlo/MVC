@@ -1,17 +1,24 @@
 <?php
 
+/**
+ * jaja creo que hice este archivo a las patadas,
+ * creo que pude estructurarlo un poco mejor,
+ * pero bueno de momento no me afecta mucho ya luego lo corrijo o capaz y lo dejo asi :n
+ */
+
 namespace Model;
 
 use Exception;
+use System\Config\AppConfig;
 
 class Route
 {
-    private $page, $conn;
+    private $page, $conn, $config;
     public $id;
 
     public function __construct(private $array_folder_error = [])
     {
-        $this->id = date("YmdHis");
+        $this->id = uniqid();
         $this->array_folder_error = array_merge([
             "ERROR_404" => false,
             "ERROR_500" => false
@@ -20,6 +27,8 @@ class Route
         $this->page = self::getURI();
         $this->conn = new DB;
         $this->conn->connect();
+
+        $this->config = new AppConfig;
     }
 
     public function getPage()
@@ -34,7 +43,6 @@ class Route
 
     static function getURI(): String
     {
-        // $ROUTE = $_GET["route"] ?? "default/";
         $ROUTE = $_GET["route"] ?? "index";
         $isIndex = (substr($ROUTE, -1) === "/" ? "index" : "");
         return "/" . $ROUTE . $isIndex;
@@ -44,9 +52,9 @@ class Route
     {
         return [
             "ARRAY" => (is_array($string) ? array_map(function ($x) {
-                return str_replace(BASE_FOLDER, BASE_SERVER, $x);
+                return str_replace($this->config::BASE_FOLDER, $this->config::BASE_SERVER, $x);
             }, $string) : ""),
-            "STRING" => str_replace(BASE_FOLDER, BASE_SERVER, $string)
+            "STRING" => str_replace($this->config::BASE_FOLDER, $this->config::BASE_SERVER, $string)
         ][strtoupper(gettype($string))] ?? $string;
     }
 
@@ -60,19 +68,25 @@ class Route
         try {
             $page = self::getPage();
             $folder = self::string_slice($page, "/", 0, -1);
+            $folderScripts = "{$folder}/script";
 
-            if (!$folder || strpos($folder, BASE_FOLDER) !== 0)
+            if (!$folder || strpos($folder, $this->config::BASE_FOLDER) !== 0)
                 throw new Exception("Invalid folder path");
 
             $files = [
                 "FRONT" => $page,
-                "BACK" => $folder . "/backend.php",
-                "STYLE" => $folder . "/style.css",
-                "SCRIPT" => $folder . "/frontend.js"
+                "BACK" => "{$folder}/backend.php",
+                "STYLE" => "{$folder}/style.css",
+                "SCRIPT" => "{$folder}/frontend.js"
             ];
 
-            # creo la carpeta
+            # Pensando como los que piensan creo que es mejor tener un único script por cada vista
+            $nameScript = str_replace(".php", "", end(explode("/", $files["FRONT"])));
+            $files["UNIQUE_SCRIPT"] = "{$folderScripts}/{$nameScript}.js";
+
+            # creo las carpetas
             if (!file_exists($folder)) mkdir($folder, 0777, true);
+            if (!file_exists($folderScripts)) mkdir($folderScripts, 0777, true);
 
             # creo los archivos
             foreach ($files as $key => $filename) if (!file_exists($filename)) {
@@ -95,13 +109,14 @@ class Route
     private function templates($type): String
     {
         $date = date("Y-m-d H:i:s");
-        $FOLDER = BASE_FOLDER;
+        $FOLDER = $this->config::BASE_FOLDER;
         return [
             "ONSESSION" => [
                 "FRONT" => <<<'HTML'
                 <?php
                 # Includes your controller
 
+                $breadcrumb = str_replace("index", "Dashboard", substr($this::getURI(), 1))
                 ?>
                 <div class="content-header">
                     <div class="container-fluid">
@@ -111,7 +126,7 @@ class Route
                             </div>
                             <div class="col-sm-6">
                                 <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item active"><?= substr($this::getURI(), 1) ?></li>
+                                    <li class="breadcrumb-item active"><?= $breadcrumb ?></li>
                                 </ol>
                             </div>
                         </div>
@@ -133,16 +148,24 @@ class Route
                 HTML,
                 "BACK" => <<<HTML
                 <?php
+            
+                use System\Config\AppConfig;
                 # Includes your controller
 
                 /*-- {$date} --*/
                 include_once "{$FOLDER}/vendor/autoload.php";
-                include "{$FOLDER}/config.php";
                 HTML,
                 "STYLE" => <<<CSS
                 /* {$date} */
                 CSS,
                 "SCRIPT" => <<<JS
+                // {$date}
+
+                $(document).ready(async () => {
+                    console.log(`I am ready`)
+                })
+                JS,
+                "UNIQUE_SCRIPT" => <<<JS
                 // {$date}
 
                 $(document).ready(async () => {
@@ -157,11 +180,12 @@ class Route
                 HTML,
                 "BACK" => <<<HTML
                 <?php
+            
+                use System\Config\AppConfig;
                 # Includes your controller
 
                 /*-- {$date} --*/
                 include_once "{$FOLDER}/vendor/autoload.php";
-                include "{$FOLDER}/config.php";
                 HTML,
                 "STYLE" => <<<CSS
                 /* {$date} */
@@ -172,68 +196,76 @@ class Route
                 $(document).ready(async () => {
                     console.log(`I am ready`)
                 })
+                JS,
+                "UNIQUE_SCRIPT" => <<<JS
+                // {$date}
+
+                $(document).ready(async () => {
+                    console.log(`I am ready`)
+                })
                 JS
             ],
-        ][strtoupper(VIEW_MODE)][strtoupper($type)] ?? $date;
+        ][strtoupper($this->config::VIEW_MODE)][strtoupper($type)] ?? $date;
     }
 
     public function view($createView = false)
     {
+        echo "<div data-router>";
         try {
 
             $ext = explode(".", $this->page);
-            $this->page = BASE_FOLDER_VIEW . $ext[0] . "." . ($ext[1] ?? "view") . "." . ($ext[2] ?? "php");
+            $this->page = $this->config::BASE_FOLDER_VIEW . $ext[0] . "." . ($ext[1] ?? "view") . "." . ($ext[2] ?? "php");
 
-            if (!PRODUCTION && $createView === true) self::createFilesAndFolders();
+            if (!$this->config::PRODUCTION && $createView === true) self::createFilesAndFolders();
 
             if (file_exists($this->page)) {
                 $folder = self::string_slice($this->page, "/", 0, -1);
 
-                # content
-                echo "<div data-router>";
-                include $this->page;
-                echo "</div>";
+                $nameScript = str_replace(".php", "", end(explode("/", $this->page)));
+                $uniqueScript = "{$folder}/script/{$nameScript}.js";
 
-                # css and scripts.
-                echo "<LOAD-CSS style=\"display: none !important\">", json_encode(self::folder_to_server(glob($folder . "/*.css")), JSON_UNESCAPED_UNICODE), "</LOAD-CSS>";
-                echo "<LOAD-SCRIPT style=\"display: none !important\">", json_encode(self::folder_to_server(glob($folder . "/*.js")), JSON_UNESCAPED_UNICODE), "</LOAD-SCRIPT>";
+                # css
+                echo implode("\n", array_map(function ($css) {
+                    return "<link rel=\"stylesheet\" href=\"{$css}\">";
+                }, self::folder_to_server(glob($folder . "/*.css"))));
+
+                # content
+                include $this->page;
+
+                # script.
+                $scrits = glob($folder . "/*.js");
+                if (file_exists($uniqueScript)) array_push($scrits, $uniqueScript);
+
+                echo "<LOAD-SCRIPT style=\"display: none !important\">",
+                json_encode(self::folder_to_server($scrits), JSON_UNESCAPED_UNICODE),
+                "</LOAD-SCRIPT>";
             } else if ($this->array_folder_error["ERROR_404"] && file_exists($this->array_folder_error["ERROR_404"]))
                 include $this->array_folder_error["ERROR_404"];
-            else echo $route, "<br>", "<h1>", 404, "</h1>";
+            else echo "<br>", "<h1>", 404, "</h1>";
         } catch (Exception $th) { // no se como puede llegar hasta aqui,pero mejor prevenir
             if ($this->array_folder_error["ERROR_500"] && file_exists($this->array_folder_error["ERROR_500"])) include $this->array_folder_error["ERROR_500"];
-            else echo $route, "<br>", "<h1>", 500, "</h1>";
+            else echo "<br>", "<h1>", 500, "</h1>";
         }
+        echo "</div>";
     }
 
     public function loadComponets(): String
     {
         return <<<HTML
-        <div data-load="{$this->id}">
-            <script>        
+            <script data-load="{$this->id}">
                 $(document).ready(() => {
-                    console.log(`Hola wenas`)
-                    const loadCSS = $(`LOAD-CSS`)
                     const loadJS = $(`LOAD-SCRIPT`)
                     const router = $(`[data-router]`)
-                    const divLoad = $(`[data-load="{$this->id}"]`)
-
-                    JSON.parse(loadCSS.text()).forEach((e) => {
-                        $.get(e, (data) => {
-                            $(`<style>`).html(data).appendTo(router)
-                        })
-                    })
+                    const loadScript = $(`[data-load="{$this->id}"]`)
 
                     JSON.parse(loadJS.text()).forEach((e) => {
                         $.getScript(e)
                     })
 
-                    loadCSS.remove()
                     loadJS.remove()
-                    divLoad.remove()
+                    loadScript.remove()
                 })
             </script>
-        </div>
         HTML;
     }
     public function __destruct()

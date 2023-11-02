@@ -7,6 +7,7 @@ use Exception;
 use InvalidArgumentException;
 
 use Intervention\Image\ImageManagerStatic as Image;
+use System\Config\AppConfig;
 
 class ProcessData
 {
@@ -35,6 +36,7 @@ class ProcessData
     public function prepare(String $table, array $data)
     {
         $this->isPrepared = true;
+        $this->prepareData = [];
 
         $this->table = $table;
 
@@ -87,7 +89,7 @@ class ProcessData
         $keys = array_merge($pData["keys"], $pFile["keys"]);
         $values = array_merge($pData["values"], $pFile["values"]);
 
-        if (!PRODUCTION && $this->autoCreation === true) self::autoCreate($this->table, $keys, DATABASE["GESTOR"]);
+        if (!AppConfig::PRODUCTION && $this->autoCreation === true) self::autoCreate($this->table, $keys);
 
         $this->query = [
             "INSERT" => "INSERT INTO {$this->table} (" . implode(", ", $keys) . ") VALUES (" . implode(", ", $values) . ")",
@@ -125,16 +127,19 @@ class ProcessData
 
         if (!empty(count($this->file))) foreach ($this->file["name"] as $name => $value) {
 
-            $filePath = BASE_FOLDER_FILE . "/" . $this->table;
+            $filePath = AppConfig::BASE_FOLDER_FILE . "/" . $this->table;
 
             # Creo una carpeta con el nombre la tabla
             if (!file_exists($filePath)) @mkdir($filePath, 0777, true);
 
             # Cargo los archivos
-            if (is_array($value)) for ($i = 0; $i < count($value); $i++) if (!empty($this->file["tmp_name"][$name][$i])) {
-                $value[$i] = $filePath . "/" . uniqid() . "_{$this->file["name"][$name][$i]}";
-                @move_uploaded_file($this->file["tmp_name"][$name][$i], $value[$i]);
-            } else if (!empty($this->file["tmp_name"][$name])) {
+            if (is_array($value)) for ($i = 0; $i < count($value); $i++) {
+                if (!empty($this->file["tmp_name"][$name][$i])) {
+                    $value[$i] = $filePath . "/" . uniqid() . "_{$this->file["name"][$name][$i]}";
+                    @move_uploaded_file($this->file["tmp_name"][$name][$i], $value[$i]);
+                }
+            }
+            else {
                 $value = $filePath . "/" . uniqid() . "_{$value}";
                 @move_uploaded_file($this->file["tmp_name"][$name], "{$value}");
             }
@@ -143,14 +148,14 @@ class ProcessData
             $data["values"][] = ":{$name}";
 
             $value = is_array($value) ? implode(self::STRING_SEPARATOR, array_map(function ($v) {
-                return str_replace(BASE_FOLDER, BASE_SERVER, $v);
-            }, $value)) : str_replace(BASE_FOLDER, BASE_SERVER, $value);
+                return str_replace(AppConfig::BASE_FOLDER, AppConfig::BASE_SERVER, $v);
+            }, $value)) : str_replace(AppConfig::BASE_FOLDER, AppConfig::BASE_SERVER, $value);
 
             $this->prepareData[":{$name}"] = $value;
 
             # Optimización de imagenes
             if ($this->OPTIMIZE_IMAGES === true) {
-                $path = str_replace(BASE_SERVER, BASE_FOLDER, explode(self::STRING_SEPARATOR, $value));
+                $path = str_replace(AppConfig::BASE_SERVER, AppConfig::BASE_FOLDER, explode(self::STRING_SEPARATOR, $value));
                 self::optimizeImages($path, $this->DEFAULT_QUALITY);
             }
         }
@@ -158,87 +163,88 @@ class ProcessData
         return $data;
     }
 
-    private function cleam($str): String
+    private function clean($str): String
     {
         return trim($str);
     }
 
-    private function autoCreate(String $table, array $columns, String $gestor)
+    private function autoCreate(String $table, array $columns)
     {
-        self::createTable($gestor, $table);
-        foreach ($columns as $column) self::createColumn($gestor, $table, $column);
+        self::createTable($table);
+        foreach ($columns as $column) self::createColumn($table, $column);
     }
 
-    public function checkTableExists($g, $table): bool
+    public function checkTableExists($table): bool
     {
         $query = [
-            "MYSQL" => self::cleam(<<<SQL
+            "MYSQL" => self::clean(<<<SQL
                 SHOW TABLES LIKE '{$table}';
             SQL),
-            "SQLSRV" => self::cleam(<<<SQL
+            "SQLSRV" => self::clean(<<<SQL
                 SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE '{$table}'
             SQL),
-            "SQLITE" => self::cleam(<<<SQL
+            "SQLITE" => self::clean(<<<SQL
                 SELECT name FROM sqlite_master WHERE type='table' AND name='{$table}';
             SQL)
-        ][$g];
+        ][$this->conn->getGestor()];
 
         $data = $this->conn->executeQuery($query);
 
         return !empty($data);
     }
 
-    public function createTable($g, $table): void
+    public function createTable($table): void
     {
-        if (self::checkTableExists($g, $table)) return;
+        if (self::checkTableExists($table)) return;
 
-        $table = self::cleam($table);
+        $table = self::clean($table);
         if (empty($table)) throw new Exception("Tabla es obligatoria");
 
         $query = [
-            "MYSQL" => self::cleam(<<<SQL
+            "MYSQL" => self::clean(<<<SQL
                 CREATE TABLE IF NOT EXISTS `{$table}` (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP()
                 )
             SQL),
-            "SQLSRV" => self::cleam(<<<SQL
+            "SQLSRV" => self::clean(<<<SQL
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = '{$table}' and xtype = 'U')
                 CREATE TABLE {$table} (
                     id INT IDENTITY(1,1) PRIMARY KEY,
                     fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP()
                 )
             SQL),
-            "SQLITE" => self::cleam(<<<SQL
+            "SQLITE" => self::clean(<<<SQL
                 CREATE TABLE IF NOT EXISTS `{$table}` (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fechaRegistro TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             SQL)
-        ][strtoupper($g)] ?? "";
+        ][strtoupper($this->conn->getGestor())] ?? "";
 
         $this->conn->executeQuery($query);
     }
 
-    public function checkColumnExists($g, $table, $column): bool
+    public function checkColumnExists($table, $column): bool
     {
+        $gestor = $this->conn->getGestor();
         $query = [
-            "MYSQL" => self::cleam(<<<SQL
+            "MYSQL" => self::clean(<<<SQL
                 SHOW COLUMNS FROM {$table} LIKE '{$column}';
             SQL),
-            "SQLSRV" => self::cleam(<<<SQL
+            "SQLSRV" => self::clean(<<<SQL
                 SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{$table}' AND COLUMN_NAME LIKE '{$column}';
             SQL),
-            "SQLITE" => self::cleam(<<<SQL
+            "SQLITE" => self::clean(<<<SQL
                 PRAGMA table_info('{$table}');
             SQL),
-        ][strtoupper($g)] ?? "";
+        ][strtoupper($gestor)] ?? "";
 
         $data = $this->conn->executeQuery($query);
 
-        foreach ($data as $row) if ($g === "MYSQL" || $g === "SQLSRV") {
+        foreach ($data as $row) if ($gestor === "MYSQL" || $gestor === "SQLSRV") {
             if (strtolower($row['Field']) === strtolower($column)) return true;
-        } elseif ($g === "SQLITE") {
+        } elseif ($gestor === "SQLITE") {
             if (strtolower($row['name']) === strtolower($column)) return true;
         }
 
@@ -246,27 +252,27 @@ class ProcessData
     }
 
 
-    public function createColumn($g, $table, $column, $type = null): void
+    public function createColumn($table, $column, $type = null): void
     {
-        if (self::checkColumnExists($g, $table, $column)) return;
+        if (self::checkColumnExists($table, $column)) return;
 
         if (is_null($type)) $type = [
             "MYSQL" => "TEXT DEFAULT NULL",
             "SQLSRV" => "VARCHAR(MAX) DEFAULT NULL",
             "SQLITE" => "VARCHAR(255) DEFAULT NULL"
-        ][strtoupper($g)] ?? "";
+        ][strtoupper($this->conn->getGestor())] ?? "";
 
         $query = [
-            "MYSQL" => self::cleam(<<<SQL
+            "MYSQL" => self::clean(<<<SQL
                 ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$type}
             SQL),
-            "SQLSRV" => self::cleam(<<<SQL
+            "SQLSRV" => self::clean(<<<SQL
                 ALTER TABLE {$table} ADD {$column} {$type}
             SQL),
-            "SQLITE" => self::cleam(<<<SQL
+            "SQLITE" => self::clean(<<<SQL
                 ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$type}
             SQL)
-        ][strtoupper($g)] ?? "";
+        ][strtoupper($this->conn->getGestor())] ?? "";
 
         $this->conn->executeQuery($query);
     }
@@ -287,7 +293,8 @@ class ProcessData
                 }
             }
         } else {
-            self::enableExtension("gd");
+            // self::enableExtension("gd");
+            throw new Exception("Habilita la extensión de \"GB\"");
         }
     }
 
@@ -309,41 +316,42 @@ class ProcessData
     /**
      * Método experimental realmente no creo que funcione :c
      */
-    private function enableExtension(String $ext)
-    {
-        $ext = strtolower($ext);
+    # Si funciona pero no creo que sea seguro
+    // private function enableExtension(String $ext)
+    // {
+    //     $ext = strtolower($ext);
 
-        $phpIniPaths = array_filter(explode(PATH_SEPARATOR, getenv("PATH")), function ($path) {
-            return strpos($path, "php") !== false;
-        });
+    //     $phpIniPaths = array_filter(explode(PATH_SEPARATOR, getenv("PATH")), function ($path) {
+    //         return strpos($path, "php") !== false;
+    //     });
 
-        foreach ($phpIniPaths as $phpPath) {
-            $phpIniPath = "{$phpPath}/php.ini";
+    //     foreach ($phpIniPaths as $phpPath) {
+    //         $phpIniPath = "{$phpPath}/php.ini";
 
-            if (!file_exists($phpIniPath)) continue;
+    //         if (!file_exists($phpIniPath)) continue;
 
-            $fileContent = file_get_contents($phpIniPath);
+    //         $fileContent = file_get_contents($phpIniPath);
 
-            if (strpos($fileContent, ";extension={$ext}") !== false) {
-                $newContent = str_replace(";extension={$ext}", "extension={$ext}", $fileContent);
-                copy($phpIniPath, "{$phpIniPath}.bak");
-                file_put_contents($phpIniPath, $newContent);
+    //         if (strpos($fileContent, ";extension={$ext}") !== false) {
+    //             $newContent = str_replace(";extension={$ext}", "extension={$ext}", $fileContent);
+    //             copy($phpIniPath, "{$phpIniPath}.bak");
+    //             file_put_contents($phpIniPath, $newContent);
 
-                self::restartServer();
+    //             self::restartServer();
 
-                return true;
-            }
-        }
+    //             return true;
+    //         }
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
-    private function restartServer()
-    {
-        # Intento de reiniciar Apache
-        exec("sudo service apache2 restart");
-        exec("sudo systemctl restart apache2");
-    }
+    // private function restartServer()
+    // {
+    //     # Intento de reiniciar Apache
+    //     exec("sudo service apache2 restart");
+    //     exec("sudo systemctl restart apache2");
+    // }
 
     public function __destruct()
     {
