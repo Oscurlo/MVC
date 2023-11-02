@@ -1,7 +1,16 @@
-# Configuracion De Mi Editor
+# Configuracion de mi editor
 .vscode
+
 # Componentes de Composer
 composer.lock
 vendor/
+
 # Carpeta de archivos
 file/
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Archivos de configuración local
+.env
