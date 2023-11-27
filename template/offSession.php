@@ -26,7 +26,8 @@ $script = implode("", array_map(function ($s) use ($SERVER, $FOLDER) {
     "AdminLTE/plugins/jquery/jquery.min.js",
     "AdminLTE/plugins/bootstrap/js/bootstrap.bundle.min.js",
     "AdminLTE/plugins/bs-custom-file-input/bs-custom-file-input.min.js",
-    "AdminLTE/dist/js/adminlte.min.js"
+    "AdminLTE/dist/js/adminlte.min.js",
+    "assets/main.js",
 ]));
 
 $forJS = json_encode([

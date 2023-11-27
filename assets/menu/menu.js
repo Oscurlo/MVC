@@ -1,27 +1,61 @@
-$(`.nav-link`).on(`click`, function (e) {
+var Config = CONFIG()
+$(document).on(`click`, `#btnDisconnect`, async function () {
+    const request = await fetch(`${Config.BASE_SERVER}/assets/menu/menu.php?action=disconnect`)
+
+    if (request.status === 200) window.location.href = Config.BASE_SERVER
+})
+
+// Intento de controlar todas las redirecciones
+$(document).on(`click`, `[href][href!=""][href!="#"][href*="${Config.BASE_SERVER}"]`, function (e) {
     e.preventDefault()
 
     const $this = $(this)
-    const $active = $(`.nav-link.active`)
 
-    // style
-    $this.addClass("active")
-    $active.removeClass("active")
-    // view
+    if ($this.hasClass("nav-link")) {
+        const $active = $(`.nav-link.active`)
+        $this.addClass("active")
+        $active.removeClass("active")
+    }
+
     title = $this.text()
     url = $this.attr("href")
     route(title, url)
 })
 
+const $CodeMirror = $(`#CodeMirrorException, #CodeMirrorError`).each(function () {
+    const $this = $(this)
+    if ($this.length) {
+        const line = parseInt($this.data('line')) - 1
+        const message = $this.data('message')
+
+        const editor = CodeMirror.fromTextArea($this.get(0), {
+            mode: "application/x-httpd-php",
+            theme: "ayu-dark",
+            value: $this.val(),
+            matchBrackets: true,
+            indentUnit: 4,
+            indentWithTabs: true,
+            lineNumbers: true
+        })
+
+        editor.addLineClass(line, "text-decoration", "CodeMirror-error-line")
+
+        $this.siblings().popover({
+            trigger: 'hover',
+            content: message
+        })
+    }
+})
+
 window.addEventListener('popstate', async function (e) {
-    const currentState = e.state;
-    if (currentState) await route(currentState.title, currentState.url);
-});
+    const currentState = e.state
+    if (currentState) await route(currentState.title, currentState.url)
+})
 
-const route = async (title, url) => {
-    const BASE_SERVER = CONFIG("BASE_SERVER")
+const route = async (title, url = "/index") => {
+    const Config = CONFIG()
 
-    const request = await fetch(`${BASE_SERVER}/assets/menu/menu.php?action=checkSession`)
+    const request = await fetch(`${Config.BASE_SERVER}/assets/menu/menu.php?action=checkSession`)
     const checkSession = await request.json()
 
     if (checkSession.status === true) {
@@ -29,24 +63,16 @@ const route = async (title, url) => {
             const $preloader = $(`.preloader`)
             const headTitle = $(`head title`)
 
-            url = (
-                url.startsWith(BASE_SERVER)
-                    ? url.replace(BASE_SERVER, "")
-                    : (
-                        url.startsWith(`/`)
-                            ? `${url}`
-                            : `/${url}`
-                    )
-            )
+            url = url.replace(Config.BASE_SERVER, "") || "/index"
 
             history.pushState({
                 title: title,
                 url: url
-            }, title, BASE_SERVER + url)
+            }, title, Config.BASE_SERVER + url)
 
             headTitle.html(title)
 
-            $.ajax(`${BASE_SERVER}/assets/menu/menu.php?action=view`, {
+            $.ajax(`${Config.BASE_SERVER}/assets/menu/menu.php?action=view`, {
                 type: "POST",
                 dataType: "HTML",
                 data: { view: url },
@@ -71,5 +97,5 @@ const route = async (title, url) => {
                 }
             })
         }
-    } else window.location.href = BASE_SERVER
+    } else window.location.href = Config.BASE_SERVER
 }

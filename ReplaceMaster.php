@@ -5,7 +5,7 @@ namespace System\Config;
 /**
  * Clase para realizar reemplazos en archivos y directorios.
  *
- * @deprecated Esta clase es peligrosa y solo debe usarse para corregir rutas.
+ * @-deprecated Esta clase es peligrosa y solo debe usarse para corregir rutas.
  */
 class ReplaceMaster
 {
@@ -19,7 +19,7 @@ class ReplaceMaster
      *
      * @return array Conteo de cambios y detalles.
      */
-    private static function replace(String $search, String $replace, String $folder = "./*", array $config = [])
+    public static function replace(String $search, String $replace, String $folder = "./*", array $config = []): array|String
     {
         $defaultConfig = [
             "returnCount" => true,
@@ -54,9 +54,6 @@ class ReplaceMaster
                 }
             }
         }
-
-        return $config["returnCount"]
-            ? array_merge($change, ["count" => count($change) - (isset($config["returnCount"]) ? 1 : 0)])
-            : $change;
+        return ($config["returnCount"] ? array_merge($change, ["count" => count($change) - (isset($config["returnCount"]) ? 1 : 0)]) : $change);
     }
 }

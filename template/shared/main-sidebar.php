@@ -1,14 +1,23 @@
-<?php $data = $_SESSION ?>
+<?php
 
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
+use Model\ImageProcessor;
+use Model\ProcessData;
+
+$data = $_SESSION ?>
+<style>
+    .inter-elevation {
+        filter: drop-shadow(3px 3px 1px rgba(255, 255, 255, .16));
+    }
+</style>
+<aside class="main-sidebar main-sidebar-custom sidebar-dark-primary elevation-4">
     <a href="index3.html" class="brand-link">
-        <img src="<?= $COMPANY["LOGO"] ?>" alt="<?= $COMPANY["NAME"] ?> Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <img src="<?= ImageProcessor::correctImageURL($COMPANY["LOGO"]) ?>" alt="<?= $COMPANY["NAME"] ?> Logo" class="brand-image img-circle inter-elevation" style="opacity: .8">
         <span class="brand-text font-weight-light"><?= $COMPANY["NAME"] ?></span>
     </a>
     <div class="sidebar">
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <img src="<?= $data["files"] ?>" class="img-circle elevation-2" alt="User Image">
+                <img src="<?= ImageProcessor::correctImageURL($data["files"]) ?>" class="img-circle inter-elevation" alt="User Image">
             </div>
             <div class="info">
                 <a href="#" class="d-block"><?= $data["name"] ?></a>
@@ -44,5 +53,9 @@
                 </li>
             </ul>
         </nav>
+    </div>
+    <div class="sidebar-custom">
+        <!-- <a href="#" class="btn btn-link"><i class="fas fa-cogs"></i></a> -->
+        <button class="btn btn-danger hide-on-collapse pos-right" id="btnDisconnect"><i class="fas fa-sign-out-alt"></i> Salir</button>
     </div>
 </aside>

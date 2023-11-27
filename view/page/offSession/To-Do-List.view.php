@@ -1,2 +1,0 @@
-<?php
-# Includes your controller

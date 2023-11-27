@@ -29,6 +29,8 @@ $styles = implode("", array_map(function ($s) use ($SERVER, $FOLDER) {
     "AdminLTE/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css",
     "AdminLTE/plugins/bs-stepper/css/bs-stepper.min.css",
     "AdminLTE/plugins/dropzone/min/dropzone.min.css",
+    "AdminLTE/plugins/codemirror/codemirror.css",
+    "AdminLTE/plugins/codemirror/theme/ayu-dark.css",
     "AdminLTE/dist/css/adminlte.min.css"
 ]));
 
@@ -62,14 +64,28 @@ $script = implode("", array_map(function ($s) use ($SERVER, $FOLDER) {
     "AdminLTE/plugins/datatables-buttons/js/buttons.html5.min.js",
     "AdminLTE/plugins/datatables-buttons/js/buttons.print.min.js",
     "AdminLTE/plugins/datatables-buttons/js/buttons.colVis.min.js",
+    "AdminLTE/plugins/codemirror/codemirror.js",
+    "AdminLTE/plugins/codemirror/mode/css/css.js",
+    "AdminLTE/plugins/codemirror/mode/xml/xml.js",
+    "AdminLTE/plugins/codemirror/mode/htmlmixed/htmlmixed.js",
+    "AdminLTE/plugins/codemirror/mode/php/php.js",
     "AdminLTE/dist/js/adminlte.min.js",
     "assets/menu/menu.js",
-    "assets/main.js"
-
+    "assets/main.js",
+    "assets/WebSocket/WebSocket.js",
+    "assets/forDatatable/forDatatable.js"
 ]));
 
 $forJS = json_encode([
-    "BASE_SERVER" => AppConfig::BASE_SERVER
+    "BASE_SERVER" => AppConfig::BASE_SERVER,
+    "WEBSOCKET" => AppConfig::WEBSOCKET
+], JSON_UNESCAPED_UNICODE);
+
+$userInfo = json_encode([
+    "id" => $_SESSION["id"],
+    "name" => $_SESSION["name"],
+    "email" => $_SESSION["email"],
+    "icon" => $_SESSION["files"],
 ], JSON_UNESCAPED_UNICODE);
 ?>
 <!DOCTYPE html>
@@ -83,6 +99,12 @@ $forJS = json_encode([
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&amp;display=fallback">
     <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
     <?= $styles ?>
+    <style>
+        .CodeMirror-error-line {
+            background: #ffecec;
+            text-decoration: red wavy underline;
+        }
+    </style>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
@@ -93,17 +115,18 @@ $forJS = json_encode([
         </div>
         <aside class="control-sidebar control-sidebar-dark"></aside>
     </div>
-
-    <?= $script ?>
-    <?= $route->loadComponets() ?>
     <script>
         <?= <<<JS
         const CONFIG = (find = null) => {
             const array = {$forJS}
             return find === null ? array : array[find] ?? null
         }
+
+        sessionStorage.setItem("userInfo", `{$userInfo}`)
         JS ?>
     </script>
+    <?= $script ?>
+    <?= $route->loadComponets() ?>
 </body>
 
 </html>

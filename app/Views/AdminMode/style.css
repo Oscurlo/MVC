@@ -1,0 +1,18 @@
+:root {
+    --my-color-100: rgba(217, 222, 249, 1);
+    --my-color-50: rgba(217, 222, 249, .5);
+}
+
+.fc-toolbar {
+    background-color: var(--dark) !important;
+    color: var(--light) !important;
+}
+
+.fc-day:hover {
+    background-color: var(--my-color-50);
+}
+
+.fc .fc-daygrid-day.fc-day-today,
+.fc .fc-timegrid-col.fc-day-today {
+    background-color: var(--my-color-100);
+}
