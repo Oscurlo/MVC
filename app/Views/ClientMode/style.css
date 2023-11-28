@@ -1,46 +1,51 @@
-body {
-    background: no-repeat var(--image) center;
-    background-size: cover;
+/* https://codepen.io/allison7860/pen/Zymmxv */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body::before {
-    content: "Foto de Ben Griffiths en Unsplash";
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.25);
+#wrapper {
+    width: 70%;
+    margin: 20px auto;
+    max-width: 900px;
+    border-radius: 20px;
+    background: #ddd;
     padding: 10px;
-    font-size: 12px;
 }
 
-.glass,
-.form-control {
-    background: rgba(255, 255, 255, .25);
-    box-shadow: 0 8px 32px 0 rgba(0, 123, 255, .37);
-    backdrop-filter: blur(5px);
-    border-radius: 10px;
-    border-width: 0 1px 1px 1px;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, .15);
+.col {
+    padding: 10px;
 }
 
-.form-control::placeholder {
-    color: var(--dark);
+h1 {
+    font-family: Arial;
+    font-size: 15pt;
+    font-style: italic;
+    color: #515151;
 }
 
-.cover-container {
-    max-width: 42em;
+pre {
+    overflow-x: auto;
 }
 
-.ml-auto,
-.mx-auto {
-    margin-left: auto !important;
+pre::-webkit-scrollbar {
+    background: #b3bccc;
 }
 
-.masthead-brand {
-    float: left;
+pre::-webkit-scrollbar-thumb {
+    background: #eee;
+    border-radius: 5px;
 }
 
-.masthead-brand {
-    margin-bottom: 0;
+pre {
+    background: #414449;
+    color: #b3bccc;
+    padding: 15px;
+    font-size: 13pt;
+    tab-size: 4;
+    -webkit-box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.75);
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, .75);
 }

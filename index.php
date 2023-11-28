@@ -2,7 +2,6 @@
 
 
 use System\Config\AppConfig;
-use System\Config\ReplaceMaster;
 
 # Manejo de errores
 set_error_handler(function ($severity, $message, $file, $line) {
@@ -14,7 +13,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
 
 set_exception_handler(function ($error) {
     # Manejo de excepciones
-    echo "Error: {$error->getMessage()}";
+    echo "Error: {$error->getMessage()}", "<br>";
+    echo "File: {$error->getFile()}", "<br>";
+    echo "Line: {$error->getLine()}", "<br>";
 });
 
 try {
@@ -44,9 +45,9 @@ try {
 
     if (file_exists($pathView)) include $pathView;
     else throw new Exception("failed to include template");
-
-    // echo "<pre>", json_encode(ReplaceMaster::replace("/", "/"), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), "</pre>";
 } catch (Exception $e) {
     # Manejo de excepciones generales
     echo "Excepción: {$e->getMessage()}";
+    echo "File: {$e->getFile()}", "<br>";
+    echo "Line: {$e->getLine()}", "<br>";
 }

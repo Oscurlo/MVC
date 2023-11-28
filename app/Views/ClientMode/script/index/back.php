@@ -2,4 +2,4 @@
 
 # Includes your controller
 
-# Includes "/vendor/autoload.php"
+include_once explode("\\app\\", __DIR__)[0] . "/vendor/autoload.php";
