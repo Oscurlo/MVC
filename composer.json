@@ -2,9 +2,10 @@
     "name": "oscurlo/mvc",
     "autoload": {
         "psr-4": {
-            "MyApp\\": "src",
+            "View\\": "app/Views/",
             "Model\\": "app/Models/",
             "Controller\\": "app/Controllers/",
+            "Config\\": "app/Config/",
             "System\\Config\\": "./"
         }
     },
@@ -19,6 +20,7 @@
         "vlucas/phpdotenv": "^5.5",
         "intervention/image": "^2.7",
         "cboden/ratchet": "^0.4.4",
-        "phpmailer/phpmailer": "^6.8"
+        "phpmailer/phpmailer": "^6.8",
+        "almasaeed2010/adminlte": "~3.1"
     }
 }

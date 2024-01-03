@@ -9,7 +9,7 @@
  * pero igual por el comentario sentí que debía crear una función sencilla que pudiera crear HTML y guala.
  */
 
-namespace Model;
+namespace Config;
 
 # Experimental :/
 class Html

@@ -35,6 +35,8 @@ class AppConfig
     const BASE_SERVER = BASE_SERVER;
     const VIEW_MODE = VIEW_MODE;
 
+    const BASE_ADMIN_LTE_3 = self::BASE_FOLDER . BASE_ADMIN_LTE_3;
+
     # Views
     const BASE_FOLDER_VIEW = self::BASE_FOLDER . "/app/Views/" . self::VIEW_MODE;
 
@@ -75,9 +77,10 @@ $dotenv->load();
 # Haha, I'm crazy, lalala
 $host = $_SERVER["HTTP_HOST"] ?? false;
 
-define("BASE_FOLDER", $_ENV["BASE_FOLDER"]);
-// define("BASE_SERVER", $_ENV["BASE_SERVER"]);
-define("BASE_SERVER", (AppConfig::PRODUCTION ? $_SERVER["BASE_SERVER"] : str_replace($_SERVER["DOCUMENT_ROOT"], ($_SERVER["REQUEST_SCHEME"] ?? "http") . "://{$host}", BASE_FOLDER)));
+define("BASE_FOLDER", trim(trim($_ENV["BASE_FOLDER"], "\\"), "/"));
+define("BASE_SERVER", trim($_SERVER["BASE_SERVER"], "/"));
+
+define("BASE_ADMIN_LTE_3", "/vendor/almasaeed2010/adminlte");
 
 define("VIEW_MODE", ($_SESSION["SESSION_MODE"] ?? "ClientMode") ?: "ClientMode");
 

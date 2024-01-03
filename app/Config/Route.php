@@ -4,7 +4,7 @@
  * This class represents a routing mechanism with view generation capabilities.
  */
 
-namespace Model;
+namespace Config;
 
 use Error;
 use Exception;
@@ -25,8 +25,6 @@ class Route extends RouteTemplateView
     public function __construct(private $array_folder_error = [])
     {
         $this->config = new AppConfig;
-
-        $this->id = uniqid();
         $this->array_folder_error = array_merge([
             "ERROR_404" => false,
             "ERROR_500" => false
@@ -114,8 +112,12 @@ class Route extends RouteTemplateView
                 echo <<<HTML
                 <pre class="m-0 p-0">new file created: {$filename}</pre>
                 HTML;
+
                 $openString = fopen($filename, "w");
-                fwrite($openString, self::templates($template));
+
+                $data = self::templates($template);
+
+                fwrite($openString, $data ?: "");
                 fclose($openString);
             }
 
@@ -130,101 +132,46 @@ class Route extends RouteTemplateView
      *
      * @param bool $createView - Flag indicating whether to create view files and folders.
      */
-    public function view($createView = false): void
+    public function view($createView = false): self
     {
-        echo "<div data-router>";
-        try {
+        $ext = explode(".", $this->page);
+        $this->view = $this->config::BASE_FOLDER_VIEW . explode("?", $ext[0])[0] . "." . ($ext[1] ?? "view") . "." . ($ext[2] ?? "php");
 
-            $ext = explode(".", $this->page);
-            $this->view = $this->config::BASE_FOLDER_VIEW . $ext[0] . "." . ($ext[1] ?? "view") . "." . ($ext[2] ?? "php");
+        if (!$this->config::PRODUCTION && $createView === true) self::createFilesAndFolders();
 
-            if (!$this->config::PRODUCTION && $createView === true) self::createFilesAndFolders();
+        self::show_content($this->view);
 
-            if (file_exists($this->view)) {
-                $folder = self::string_slice($this->view, "/", 0, -1);
+        return $this;
+    }
 
-                $nameScript = explode("/", $this->view);
-                $arrayName = explode(".", end($nameScript));
-                $uniqueScript = "{$folder}/script/{$arrayName[0]}/front.js";
+    static function href(String $url = "", array $get = []): String
+    {
+        $url = trim(str_replace([
+            AppConfig::BASE_FOLDER,
+            AppConfig::BASE_SERVER,
+            ".view",
+            ".php"
+        ], "", $url), "/");
 
-                # css
-                echo implode("\n", array_map(function ($css) {
-                    return "<link rel=\"stylesheet\" href=\"{$css}\">";
-                }, self::folder_to_server(glob($folder . "/*.css"))));
+        $url = !empty($url) ? "/{$url}" : "";
+        $get = !empty($get) ? "?" . http_build_query($get) : "";
 
-                # content
-                include $this->view;
-
-                # script.
-                $scrits = glob($folder . "/*.js");
-                if (file_exists($uniqueScript)) array_push($scrits, $uniqueScript);
-
-                echo "<LOAD-SCRIPT style=\"display: none !important\">",
-                json_encode(self::folder_to_server($scrits), JSON_UNESCAPED_UNICODE),
-                "</LOAD-SCRIPT>";
-            } else if ($this->array_folder_error["ERROR_404"] && file_exists($this->array_folder_error["ERROR_404"]))
-                include $this->array_folder_error["ERROR_404"];
-            else echo <<<HTML
-                <div class="container">
-                    <h3>Error 404</h3>
-                </div>
-            HTML;
-        } catch (Exception | Error $th) {
-            if ($this->array_folder_error["ERROR_500"] && file_exists($this->array_folder_error["ERROR_500"]))
-                include $this->array_folder_error["ERROR_500"];
-            else if ($this->config::SHOW_ERROR) {
-                $html = self::showFileError($th);
-                $message = $th instanceof Exception ? "Exception" : "Error";
-                $divId = $th instanceof Exception ? "CodeMirrorException" : "CodeMirrorError";
-
-                echo <<<HTML
-                    <div class="container">
-                        <textarea class="m-5" id="{$divId}" data-line="{$th->getLine()}" data-message="{$message}: {$th->getMessage()}" disabled>{$html}</textarea>
-                    </div>
-                HTML;
-            } else echo <<<HTML
-                <div class="container">
-                    <h3>Error 500</h3>
-                </div>
-            HTML;
-        }
-
-        echo "</div>";
+        return AppConfig::BASE_SERVER . $url . $get;
     }
 
     protected function showLineError(Exception|Error $e): String
     {
-        return trim(explode("\n", file_get_contents($e->getFile()))[$e->getLine() + 1]);
+
+        $file = explode(PHP_EOL, file_get_contents($e->getFile()));
+        $response = [];
+
+        for ($i = 0; $i <= $e->getLine(); $i++) $response[] = $file[$i];
+        return implode(PHP_EOL, $response);
     }
 
     protected function showFileError(Exception|Error $e): String
     {
         return trim(file_get_contents($e->getFile()));
-    }
-
-    /**
-     * Generates HTML script for loading components.
-     *
-     * @return string - HTML script for loading components.
-     */
-    public function loadComponets(): String
-    {
-        return <<<HTML
-            <script data-load="{$this->id}">
-                $(document).ready(() => {
-                    const loadJS = $(`LOAD-SCRIPT`)
-                    const router = $(`[data-router]`)
-                    const loadScript = $(`[data-load="{$this->id}"]`)
-                    
-                    if (loadJS.length) JSON.parse(loadJS.text()).forEach((e) => {
-                        $.getScript(e)
-                    })
-
-                    loadJS.remove()
-                    loadScript.remove()
-                })
-            </script>
-        HTML;
     }
 
     /**

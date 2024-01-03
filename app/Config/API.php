@@ -4,7 +4,7 @@
  * This class provides a simple API client for making HTTP requests using cURL.
  */
 
-namespace Model;
+namespace Config;
 
 use ErrorException;
 use Exception;

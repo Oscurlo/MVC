@@ -7,7 +7,7 @@
  * I'll try to maintain the comments in English for you ;)
  */
 
-namespace Model;
+namespace Config;
 
 use Error;
 use PDO;

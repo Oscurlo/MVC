@@ -1,11 +1,13 @@
 <?php
 # Includes your controller
 $Info = [
-    "php version" => ">= 8+",
+    "php version" => ">= 7.4+",
     "Author" => "Esteban Serna Palacios",
     "examples" => [
         "https://github.com/Oscurlo/MVC_AdminLTE"
-    ]
+    ],
+    "environment" => $_ENV,
+    "session" => $_SESSION
 ];
 
 

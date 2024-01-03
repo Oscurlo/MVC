@@ -6,7 +6,7 @@
  *
  */
 
-namespace Model;
+namespace Config;
 
 use Exception;
 
