@@ -132,7 +132,7 @@ class Route extends RouteTemplateView
      *
      * @param bool $createView - Flag indicating whether to create view files and folders.
      */
-    public function view($createView = false): self
+    public function view($createView = false): void
     {
         $ext = explode(".", $this->page);
         $this->view = $this->config::BASE_FOLDER_VIEW . explode("?", $ext[0])[0] . "." . ($ext[1] ?? "view") . "." . ($ext[2] ?? "php");
@@ -140,8 +140,6 @@ class Route extends RouteTemplateView
         if (!$this->config::PRODUCTION && $createView === true) self::createFilesAndFolders();
 
         self::show_content($this->view);
-
-        return $this;
     }
 
     static function href(String $url = "", array $get = []): String
